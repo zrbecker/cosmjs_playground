@@ -25,7 +25,7 @@ export default function TxHash() {
           onSubmit={handleSubmit}
         >
           <textarea
-            className="w-full h-32 dark:bg-gray-700 shadow appearance-none border rounded px-3 py-2 leading-tight"
+            className="w-full h-32 dark:bg-gray-700 shadow border rounded px-3 py-2 leading-tight"
             placeholder="Enter encoded transaction"
             value={txHash}
             onChange={(e) => setTxHash(e.target.value)}

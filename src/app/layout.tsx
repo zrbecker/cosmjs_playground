@@ -31,6 +31,11 @@ export default function RootLayout({
                 Transaction ID Generator
               </li>
             </Link>
+            <Link href="/tools/convert_address">
+              <li className="py-2 px-4 hover:bg-gray-700 cursor-pointer">
+                Bech32 Address Converter
+              </li>
+            </Link>
           </ul>
         </div>
         <div className="ml-64">{children}</div>
