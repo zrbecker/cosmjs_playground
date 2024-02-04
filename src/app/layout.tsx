@@ -28,7 +28,7 @@ export default function RootLayout({
             </Link>
             <Link href="/tools/generate_transaction_id">
               <li className="py-2 px-4 hover:bg-gray-700 cursor-pointer">
-                Generate Transaction ID
+                Transaction ID Generator
               </li>
             </Link>
           </ul>

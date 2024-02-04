@@ -19,7 +19,7 @@ export default function TxHash() {
   return (
     <div className="flex flex-col space-y-4 pt-4 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h2 className="text-xl font-medium">Generate Transaction ID</h2>
+        <h2 className="text-xl font-medium">Transaction ID Generator</h2>
         <form
           className="mt-2 flex flex-col items-start space-y-3"
           onSubmit={handleSubmit}
@@ -42,14 +42,14 @@ export default function TxHash() {
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded"
             type="submit"
           >
-            Compute Transaction ID
+            Generate
           </button>
         </form>
       </div>
 
       {txId == "" ? null : (
         <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg overflow-wrap break-all">
-          <h3 className="text-xl font-medium">Computed Hash:</h3>
+          <h3 className="text-xl font-medium">Transaction ID</h3>
           <p className="mt-2 font-mono">{txId}</p>
         </div>
       )}
