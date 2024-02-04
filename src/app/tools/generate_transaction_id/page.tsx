@@ -25,7 +25,7 @@ export default function TxHash() {
           onSubmit={handleSubmit}
         >
           <textarea
-            className="w-full dark:bg-gray-700 shadow appearance-none border rounded px-3 py-2 leading-tight"
+            className="w-full h-32 dark:bg-gray-700 shadow appearance-none border rounded px-3 py-2 leading-tight"
             placeholder="Enter encoded transaction"
             value={txHash}
             onChange={(e) => setTxHash(e.target.value)}
@@ -42,7 +42,7 @@ export default function TxHash() {
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded"
             type="submit"
           >
-            Compute Hash
+            Compute Transaction ID
           </button>
         </form>
       </div>
