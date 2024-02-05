@@ -22,7 +22,7 @@ export default function ConvertPubKey() {
     } else if (account != null) {
       setAccount(null);
     }
-  }, [keplr, nonce, connected]);
+  }, [account, connected, keplr, nonce]);
 
   return (
     <div className="flex flex-col space-y-4 pt-4 px-4">

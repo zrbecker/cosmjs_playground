@@ -73,5 +73,6 @@ export default function useKeplr(chainIds: string | string[]) {
     setConnected(false);
   };
 
-  return { connected, nonce, connect, disconnect, keplr: window.keplr };
+  const keplr = typeof window !== "undefined" ? window.keplr : undefined;
+  return { connected, nonce, connect, disconnect, keplr };
 }
