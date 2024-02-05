@@ -7,28 +7,22 @@ declare global {
 }
 
 export default function useKeplr(chainIds: string[]) {
-  const [loading, setLoading] = useState(true);
-  const [keplr, setKeplr] = useState<Keplr | null>(null);
   const [connected, setConnected] = useLocalStorageState<string[]>(
     "keplr-connected",
     []
   );
 
-  useEffect(() => {
-    if (loading) {
-      setLoading(false);
-      if (chainIds.every((chainId) => connected.includes(chainId))) {
-        try {
-          setKeplr(getKeplrGlobal());
-        } catch (e) {
-          console.error(e);
-          setConnected([]);
-        }
-      } else {
-        setKeplr(null);
+  const [keplr, setKeplr] = useState<Keplr | null>(() => {
+    if (chainIds.every((chainId) => connected.includes(chainId))) {
+      try {
+        return getKeplrGlobal();
+      } catch (e) {
+        console.error(e);
+        setConnected([]);
       }
     }
-  }, [loading, chainIds, connected, setConnected]);
+    return null;
+  });
 
   const isConnected = Boolean(keplr);
   useEffect(() => {

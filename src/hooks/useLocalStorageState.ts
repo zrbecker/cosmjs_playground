@@ -5,14 +5,12 @@ export default function useLocalStorageState<S>(
   initialState: S | (() => S)
 ): [S, Dispatch<SetStateAction<S>>] {
   const [state, setState] = useState<S>(() => {
-    if (typeof localStorage !== "undefined") {
-      const value = localStorage.getItem(storageKey);
-      if (value) {
-        try {
-          return JSON.parse(value);
-        } catch (e) {
-          console.error(e);
-        }
+    const value = localStorage.getItem(storageKey);
+    if (value) {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        console.error(e);
       }
     }
     return initialState;
