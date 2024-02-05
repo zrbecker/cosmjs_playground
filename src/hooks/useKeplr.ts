@@ -1,23 +1,34 @@
 import { Keplr, Window as KeplrWindow } from "@keplr-wallet/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import useLocalStorageState from "./useLocalStorageState";
 
 declare global {
   interface Window extends KeplrWindow {}
 }
 
-export default function useKeplr(chainIds: string | string[]) {
+export default function useKeplr(chainIds: string[]) {
+  const [loading, setLoading] = useState(true);
   const [keplr, setKeplr] = useState<Keplr | null>(null);
+  const [connected, setConnected] = useLocalStorageState<string[]>(
+    "keplr-connected",
+    []
+  );
 
   useEffect(() => {
-    if (getIsConnected()) {
-      try {
-        setKeplr(getKeplrGlobal());
-      } catch (e) {
-        console.error(e);
-        setIsConnected(false);
+    if (loading) {
+      setLoading(false);
+      if (chainIds.every((chainId) => connected.includes(chainId))) {
+        try {
+          setKeplr(getKeplrGlobal());
+        } catch (e) {
+          console.error(e);
+          setConnected([]);
+        }
+      } else {
+        setKeplr(null);
       }
     }
-  }, []);
+  }, [loading, chainIds, connected, setConnected]);
 
   const isConnected = Boolean(keplr);
   useEffect(() => {
@@ -29,35 +40,19 @@ export default function useKeplr(chainIds: string | string[]) {
     }
   }, [isConnected]);
 
-  const connect = async () => {
+  const connect = useCallback(async () => {
     await getKeplrGlobal().enable(chainIds);
-    setIsConnected(true);
+    setConnected(chainIds);
     setKeplr(cloneObject(getKeplrGlobal()));
-  };
+  }, [chainIds, setConnected]);
 
-  const disconnect = async () => {
+  const disconnect = useCallback(async () => {
     await getKeplrGlobal().disable();
-    setIsConnected(false);
+    setConnected([]);
     setKeplr(null);
-  };
+  }, [setConnected]);
 
   return { keplr, connect, disconnect };
-}
-
-const LS_KEY_CONNECTED = "keplr-wallet-connected";
-
-function getIsConnected() {
-  try {
-    return Boolean(
-      JSON.parse(window.localStorage.getItem(LS_KEY_CONNECTED) || "")
-    );
-  } catch (e) {
-    return false;
-  }
-}
-
-function setIsConnected(connected: boolean) {
-  window.localStorage.setItem(LS_KEY_CONNECTED, JSON.stringify(connected));
 }
 
 function getKeplrGlobal() {
