@@ -3,9 +3,8 @@
 import { AccountData } from "@keplr-wallet/types";
 import useLocalStorageState from "@/hooks/useLocalStorageState";
 import useKeplr from "@/hooks/useKeplr";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { toBase64 } from "@cosmjs/encoding";
-import dynamic from "next/dynamic";
 
 const DEFAULT_CHAIN_IDS = ["cosmoshub-4", "osmosis-1"];
 
@@ -21,18 +20,20 @@ export default function KeplrAccounts() {
 
   useEffect(() => {
     if (keplr) {
-      for (const chainId of chainIds) {
-        keplr
-          .getOfflineSigner(chainId)
-          .getAccounts()
-          .then((keplrAccounts) =>
-            setAccounts((accounts) => ({
-              ...accounts,
-              [chainId]: keplrAccounts[0],
-            }))
-          )
-          .catch((e) => console.error(e));
-      }
+      (async () => {
+        const accounts: { [key: string]: AccountData } = {};
+        for (const chainId of chainIds) {
+          try {
+            const keplrAccounts = await keplr
+              .getOfflineSigner(chainId)
+              .getAccounts();
+            accounts[chainId] = keplrAccounts[0];
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        setAccounts(accounts);
+      })();
     } else {
       setAccounts({});
     }
@@ -116,11 +117,11 @@ export default function KeplrAccounts() {
             const account = accounts[chainId];
             if (account === undefined) return null;
             return (
-              <>
+              <Fragment key={chainId}>
                 {i !== 0 ? (
                   <div className="border-b border-gray-200 my-3"></div>
                 ) : null}
-                <div key={chainId}>
+                <div>
                   <h3 className="text-lg font-medium">{chainId}</h3>
                   <div>
                     <span className="inline-block w-44">
@@ -139,7 +140,7 @@ export default function KeplrAccounts() {
                     {toBase64(account.pubkey)}
                   </div>
                 </div>
-              </>
+              </Fragment>
             );
           })}
         </div>
