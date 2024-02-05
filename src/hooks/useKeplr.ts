@@ -35,9 +35,35 @@ export default function useKeplr(chainIds: string[]) {
   }, [isConnected]);
 
   const connect = useCallback(async () => {
-    await getKeplrGlobal().enable(chainIds);
-    setConnected(chainIds);
-    setKeplr(cloneObject(getKeplrGlobal()));
+    let enableChainIds = chainIds;
+
+    while (enableChainIds.length > 0) {
+      try {
+        await getKeplrGlobal().enable(enableChainIds);
+        setConnected(enableChainIds);
+        setKeplr(cloneObject(getKeplrGlobal()));
+        return;
+      } catch (e: any) {
+        if (typeof e?.message !== "string") {
+          console.log("No message in error", e);
+          throw e;
+        }
+
+        const unsupportedChainId = getUnsupportedChainId(e?.message);
+        if (!unsupportedChainId) {
+          throw e;
+        }
+
+        const currentLength = enableChainIds.length;
+        enableChainIds = enableChainIds.filter(
+          (chainId) => chainId !== unsupportedChainId
+        );
+
+        if (currentLength === enableChainIds.length) {
+          throw e;
+        }
+      }
+    }
   }, [chainIds, setConnected]);
 
   const disconnect = useCallback(async () => {
@@ -47,6 +73,17 @@ export default function useKeplr(chainIds: string[]) {
   }, [setConnected]);
 
   return { keplr, connect, disconnect };
+}
+
+function getUnsupportedChainId(message: string) {
+  const pattern = /There is no chain info for ([-a-zA-Z0-9]{3,47})/;
+  const match = message.match(pattern);
+
+  if (match) {
+    return match[1];
+  } else {
+    return null;
+  }
 }
 
 function getKeplrGlobal() {
