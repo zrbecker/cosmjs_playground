@@ -11,6 +11,7 @@
   "dependencies": {
     "@cosmjs/crypto": "^0.32.2",
     "@cosmjs/encoding": "^0.32.2",
+    "@keplr-wallet/types": "^0.12.65",
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18"

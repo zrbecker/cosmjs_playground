@@ -36,6 +36,11 @@ export default function RootLayout({
                 Bech32 Address Converter
               </li>
             </Link>
+            <Link href="/tools/accounts">
+              <li className="py-2 px-4 hover:bg-gray-700 cursor-pointer">
+                Keplr Accounts
+              </li>
+            </Link>
           </ul>
         </div>
         <div className="ml-64">{children}</div>
