@@ -10,32 +10,32 @@ export default function useKeplr(chainIds: string | string[]) {
 
   useEffect(() => {
     if (getIsConnected()) {
-      setKeplr(getKeplrGlobal());
+      try {
+        setKeplr(getKeplrGlobal());
+      } catch (e) {
+        console.error(e);
+        setIsConnected(false);
+      }
     }
   }, []);
 
+  const isConnected = Boolean(keplr);
   useEffect(() => {
-    if (keplr) {
+    if (isConnected) {
       const triggerUpdate = () => setKeplr(cloneObject(getKeplrGlobal()));
       window.addEventListener("keplr_keystorechange", triggerUpdate);
       return () =>
         window.removeEventListener("keplr_keystorechange", triggerUpdate);
     }
-  }, [chainIds, keplr]);
+  }, [isConnected]);
 
   const connect = async () => {
-    if (keplr) {
-      throw new Error("Keplr already connected");
-    }
     await getKeplrGlobal().enable(chainIds);
     setIsConnected(true);
-    setKeplr(getKeplrGlobal());
+    setKeplr(cloneObject(getKeplrGlobal()));
   };
 
   const disconnect = async () => {
-    if (!keplr) {
-      throw new Error("Keplr already disconnected");
-    }
     await getKeplrGlobal().disable();
     setIsConnected(false);
     setKeplr(null);
