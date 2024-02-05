@@ -1,78 +1,84 @@
-import { Window as KeplrWindow } from "@keplr-wallet/types";
+import { Keplr, Window as KeplrWindow } from "@keplr-wallet/types";
 import { useEffect, useState } from "react";
 
 declare global {
   interface Window extends KeplrWindow {}
 }
 
-const KEPLR_WALLET_CONNECTED = "keplr-wallet-connected";
-
 export default function useKeplr(chainIds: string | string[]) {
-  const [initialized, setInitialized] = useState(false);
-  const [connected, setConnected] = useState(false);
-  const [nonce, setNonce] = useState(0);
+  const [keplr, setKeplr] = useState<Keplr | null>(null);
 
-  // recover connected state from local storage
   useEffect(() => {
-    if (initialized) return;
-
-    let connectedStorage = false;
-    try {
-      connectedStorage = Boolean(
-        JSON.parse(window.localStorage.getItem(KEPLR_WALLET_CONNECTED) || "")
-      );
-    } catch (e) {}
-    setConnected(connectedStorage);
-
-    setInitialized(true);
-  }, [initialized]);
-
-  // persist connected state to local storage
-  useEffect(() => {
-    if (!initialized) return;
-
-    window.localStorage.setItem(
-      KEPLR_WALLET_CONNECTED,
-      JSON.stringify(connected)
-    );
-  }, [initialized, connected]);
-
-  // listen for keystore changes
-  useEffect(() => {
-    window.addEventListener("keplr_keystorechange", (e) => {
-      setNonce((nonce) => nonce + 1);
-    });
+    if (getIsConnected()) {
+      setKeplr(getKeplrGlobal());
+    }
   }, []);
 
-  // connect keplr wallet handler
+  useEffect(() => {
+    if (keplr) {
+      const triggerUpdate = () => setKeplr(cloneObject(getKeplrGlobal()));
+      window.addEventListener("keplr_keystorechange", triggerUpdate);
+      return () =>
+        window.removeEventListener("keplr_keystorechange", triggerUpdate);
+    }
+  }, [chainIds, keplr]);
+
   const connect = async () => {
-    if (connected) {
+    if (keplr) {
       throw new Error("Keplr already connected");
     }
-
-    if (!window.keplr) {
-      throw new Error("Keplr extension not installed");
-    }
-
-    await window.keplr.enable(chainIds);
-    setConnected(true);
+    await getKeplrGlobal().enable(chainIds);
+    setIsConnected(true);
+    setKeplr(getKeplrGlobal());
   };
 
-  // disconnect keplr wallet handler
   const disconnect = async () => {
-    if (!connected) {
+    if (!keplr) {
       throw new Error("Keplr already disconnected");
     }
-
-    if (!window.keplr) {
-      throw new Error("Keplr extension not installed");
-    }
-
-    window.keplr.disable();
-    window.localStorage.setItem(KEPLR_WALLET_CONNECTED, JSON.stringify(false));
-    setConnected(false);
+    await getKeplrGlobal().disable();
+    setIsConnected(false);
+    setKeplr(null);
   };
 
-  const keplr = typeof window !== "undefined" ? window.keplr : undefined;
-  return { connected, nonce, connect, disconnect, keplr };
+  return { keplr, connect, disconnect };
+}
+
+const LS_KEY_CONNECTED = "keplr-wallet-connected";
+
+function getIsConnected() {
+  try {
+    return Boolean(
+      JSON.parse(window.localStorage.getItem(LS_KEY_CONNECTED) || "")
+    );
+  } catch (e) {
+    return false;
+  }
+}
+
+function setIsConnected(connected: boolean) {
+  window.localStorage.setItem(LS_KEY_CONNECTED, JSON.stringify(connected));
+}
+
+function getKeplrGlobal() {
+  if (window.keplr) {
+    return window.keplr;
+  }
+  throw new Error("Keplr not found in window");
+}
+
+function cloneObject(obj: any) {
+  const clone = Object.create(Object.getPrototypeOf(obj));
+
+  const props = Object.getOwnPropertyNames(obj);
+  const symbols = Object.getOwnPropertySymbols(obj);
+  const allProps = [...props, ...symbols];
+
+  allProps.forEach((prop) => {
+    const descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+    if (!descriptor) return;
+    Object.defineProperty(clone, prop, descriptor);
+  });
+
+  return clone;
 }

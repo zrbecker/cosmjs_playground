@@ -5,31 +5,30 @@ import useKeplr from "@/hooks/keplr/useKeplr";
 import { useEffect, useState } from "react";
 import { toBase64 } from "@cosmjs/encoding";
 
+const CHAIN_IDS = ["cosmoshub-4", "osmosis-1"];
+
 export default function ConvertPubKey() {
-  const { connected, nonce, connect, disconnect, keplr } = useKeplr([
-    "cosmoshub-4",
-    "osmosis-1",
-  ]);
+  const { keplr, connect, disconnect } = useKeplr(CHAIN_IDS);
   const [account, setAccount] = useState<AccountData | null>(null);
 
   useEffect(() => {
-    if (keplr && connected) {
+    if (keplr) {
       keplr
         .getOfflineSigner("cosmoshub-4")
         .getAccounts()
         .then((accounts) => setAccount(accounts[0]))
         .catch((e) => console.error(e));
-    } else if (account != null) {
+    } else {
       setAccount(null);
     }
-  }, [account, connected, keplr, nonce]);
+  }, [keplr]);
 
   return (
     <div className="flex flex-col space-y-4 pt-4 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col space-y-3">
         <h2 className="text-xl font-medium">Keplr Accounts</h2>
         <div className="flex space-x-2 items-start">
-          {!connected ? (
+          {!keplr ? (
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded"
               type="button"
