@@ -5,8 +5,16 @@ import useLocalStorageState from "@/hooks/useLocalStorageState";
 import useKeplr from "@/hooks/useKeplr";
 import { Fragment, useEffect, useState } from "react";
 import { toBase64 } from "@cosmjs/encoding";
+import { ethers } from "ethers";
 
 const DEFAULT_CHAIN_IDS = ["cosmoshub-4", "osmosis-1"];
+
+function publicKeyToEvmAddress(base64PublicKey: string) {
+  const publicKey = ethers.decodeBase64(base64PublicKey);
+  const hashed = ethers.keccak256(publicKey);
+  const evmAddress = ethers.getAddress("0x" + hashed.slice(-40));
+  return evmAddress;
+}
 
 export default function KeplrAccounts() {
   const [chainIds, setChainIds] = useLocalStorageState(
@@ -24,10 +32,14 @@ export default function KeplrAccounts() {
         const accounts: { [key: string]: AccountData } = {};
         for (const chainId of chainIds) {
           try {
-            const keplrAccounts = await keplr
-              .getOfflineSigner(chainId)
-              .getAccounts();
-            accounts[chainId] = keplrAccounts[0];
+            try {
+              const keplrAccounts = await keplr
+                .getOfflineSigner(chainId)
+                .getAccounts();
+              accounts[chainId] = keplrAccounts[0];
+            } catch (e) {
+              console.error(e);
+            }
           } catch (e) {
             console.error(e);
           }
@@ -138,6 +150,10 @@ export default function KeplrAccounts() {
                       Public Key (Base64):{" "}
                     </span>
                     {toBase64(account.pubkey)}
+                  </div>
+                  <div>
+                    <span className="inline-block w-44">EVM Address: </span>
+                    {publicKeyToEvmAddress(toBase64(account.pubkey))}
                   </div>
                 </div>
               </Fragment>

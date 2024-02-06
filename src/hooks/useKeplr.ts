@@ -45,7 +45,6 @@ export default function useKeplr(chainIds: string[]) {
         return;
       } catch (e: any) {
         if (typeof e?.message !== "string") {
-          console.log("No message in error", e);
           throw e;
         }
 
@@ -76,7 +75,7 @@ export default function useKeplr(chainIds: string[]) {
 }
 
 function getUnsupportedChainId(message: string) {
-  const pattern = /There is no chain info for ([-a-zA-Z0-9]{3,47})/;
+  const pattern = /^There is no chain info for (.*)$/;
   const match = message.match(pattern);
 
   if (match) {
