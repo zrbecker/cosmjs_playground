@@ -1,6 +1,6 @@
 "use client";
 
-import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
+import { fromBech32, fromHex, toBech32, toHex } from "@cosmjs/encoding";
 import { ethers } from "ethers";
 import { useState } from "react";
 
@@ -48,7 +48,7 @@ export default function ConvertPubKey() {
     }
 
     try {
-      setBech32Address(toBech32(bech32Prefix, fromBech32(e.target.value).data));
+      setBech32Address(toBech32(bech32Prefix, fromHex(e.target.value)));
     } catch (error) {
       /* ignore error */
       console.error(error);
