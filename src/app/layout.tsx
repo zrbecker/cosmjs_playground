@@ -41,6 +41,11 @@ export default function RootLayout({
                 Keplr Accounts
               </li>
             </Link>
+            <Link href="/tools/generate_wallet">
+              <li className="py-2 px-4 hover:bg-gray-700 cursor-pointer">
+                Generate Wallet
+              </li>
+            </Link>
           </ul>
         </div>
         <div className="ml-64">{children}</div>

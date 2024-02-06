@@ -4,16 +4,13 @@ import { AccountData } from "@keplr-wallet/types";
 import useLocalStorageState from "@/hooks/useLocalStorageState";
 import useKeplr from "@/hooks/useKeplr";
 import { Fragment, useEffect, useState } from "react";
-import { toBase64 } from "@cosmjs/encoding";
+import { fromBase64, toBase64, toHex } from "@cosmjs/encoding";
 import { ethers } from "ethers";
 
-const DEFAULT_CHAIN_IDS = ["cosmoshub-4", "osmosis-1"];
+const DEFAULT_CHAIN_IDS = ["cosmoshub-4", "osmosis-1", "injective-1"];
 
 function publicKeyToEvmAddress(base64PublicKey: string) {
-  const publicKey = ethers.decodeBase64(base64PublicKey);
-  const hashed = ethers.keccak256(publicKey);
-  const evmAddress = ethers.getAddress("0x" + hashed.slice(-40));
-  return evmAddress;
+  return ethers.computeAddress("0x" + toHex(fromBase64(base64PublicKey)));
 }
 
 export default function KeplrAccounts() {
