@@ -52,7 +52,9 @@ export default function ConvertPubKey() {
       if (bech32Prefix === "") {
         setBech32Prefix(prefix);
       }
-      setBech32Address(toBech32(prefix, fromHex(e.target.value)));
+      setBech32Address(
+        toBech32(prefix, fromHex(e.target.value.replace(/^0x/, "")))
+      );
     } catch (error) {
       /* ignore error */
       console.error(error);
