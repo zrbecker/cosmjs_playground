@@ -48,7 +48,11 @@ export default function ConvertPubKey() {
     }
 
     try {
-      setBech32Address(toBech32(bech32Prefix, fromHex(e.target.value)));
+      const prefix = bech32Prefix || "cosmos";
+      if (bech32Prefix === "") {
+        setBech32Prefix(prefix);
+      }
+      setBech32Address(toBech32(prefix, fromHex(e.target.value)));
     } catch (error) {
       /* ignore error */
       console.error(error);
