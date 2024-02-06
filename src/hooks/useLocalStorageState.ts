@@ -13,6 +13,9 @@ export default function useLocalStorageState<S>(
         console.error(e);
       }
     }
+    if (initialState instanceof Function) {
+      return initialState();
+    }
     return initialState;
   });
 

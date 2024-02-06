@@ -1,70 +1,44 @@
+import useLocalStorageState from "@/hooks/useLocalStorageState";
 import {
-  Bip39,
-  EnglishMnemonic,
-  Random,
-  Secp256k1,
-  Slip10,
-  Slip10Curve,
-  ripemd160,
-  sha256,
-  stringToPath,
-} from "@cosmjs/crypto";
-import { fromHex, toBase64, toBech32, toHex } from "@cosmjs/encoding";
+  KeyPair,
+  createMnemonic,
+  privateKeyFromMnemonic,
+  rawCosmosAddress,
+  rawEvmAddress,
+} from "@/utils/cryptoAddresses";
+import { Secp256k1 } from "@cosmjs/crypto";
+import { toBase64, toBech32, toHex } from "@cosmjs/encoding";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 
-function generateMnemonic(entropyBytes: number) {
-  return Bip39.encode(Random.getBytes(entropyBytes)).toString();
-}
-
-function cosmosAddress(publicKey: string) {
-  const sha256Hash = sha256(fromHex(publicKey));
-  const rawAddress = ripemd160(sha256Hash);
-  return toHex(rawAddress).toUpperCase();
-}
-
-async function generatePrivateKeyFromMnemonic(
-  mnemonic: string,
-  hdPath: string
-) {
-  const seed = await Bip39.mnemonicToSeed(new EnglishMnemonic(mnemonic));
-
-  const { privkey: privateKey } = Slip10.derivePath(
-    Slip10Curve.Secp256k1,
-    seed,
-    stringToPath(hdPath)
+export default function GenerateWallet() {
+  const [entropy, setEntropy] = useLocalStorageState(
+    "generate_wallet_entropy",
+    16
   );
-  const { pubkey: publicKey } = await Secp256k1.makeKeypair(privateKey);
-  return {
-    privateKey: toHex(privateKey).toUpperCase(),
-    publicKey: toHex(Secp256k1.compressPubkey(publicKey)).toUpperCase(),
-  };
-}
 
-function generateAddress(publicKey: string) {
-  ethers.computeAddress(publicKey);
-}
-
-export default function GenericWallet() {
-  const [mnemonic, setMnemonic] = useState(
-    "quantum cost labor narrow subject ball ethics math friend work badge chronic"
+  const [mnemonic, setMnemonic] = useLocalStorageState(
+    "generate_wallet_mnemonic",
+    () => createMnemonic(entropy)
   );
-  const [entropy, setEntropy] = useState(16);
-  const [hdPath, setHdPath] = useState("m/44'/118'/0'/0/0");
 
-  const [privateKey, setPrivateKey] = useState<string | undefined>();
-  const [publicKey, setPublicKey] = useState<string | undefined>();
+  const [hdPath, setHdPath] = useLocalStorageState(
+    "generate_wallet_hdpath",
+    "m/44'/118'/0'/0/0"
+  );
+
+  const [prefix, setPrefix] = useLocalStorageState(
+    "generate_wallet_prefix",
+    "cosmos"
+  );
+
+  const [keyPair, setKeyPair] = useState<KeyPair | null>();
 
   useEffect(() => {
     if (mnemonic) {
-      (async () => {
-        const { privateKey, publicKey } = await generatePrivateKeyFromMnemonic(
-          mnemonic,
-          hdPath
-        );
-        setPrivateKey(privateKey);
-        setPublicKey(publicKey);
-      })();
+      privateKeyFromMnemonic(mnemonic, hdPath)
+        .then(setKeyPair)
+        .catch(console.error);
     }
   }, [mnemonic, hdPath]);
 
@@ -88,7 +62,7 @@ export default function GenericWallet() {
         </div>
         <div
           className="cursor-pointer underline"
-          onClick={() => setMnemonic(generateMnemonic(entropy))}
+          onClick={() => setMnemonic(createMnemonic(entropy))}
         >
           Generate Mnemonic
         </div>
@@ -106,18 +80,40 @@ export default function GenericWallet() {
           value={hdPath}
           onChange={(e) => setHdPath(e.target.value)}
         />
-        {privateKey && publicKey ? (
+        <input
+          type="text"
+          className="flex-grow dark:bg-gray-700 px-3 py-2 leading-tight shadow border rounded"
+          placeholder="cosmos"
+          value={prefix}
+          onChange={(e) => setPrefix(e.target.value)}
+        />
+        {keyPair ? (
           <>
-            <div>Private Key: {privateKey}</div>
-            <div>Public Key: {publicKey}</div>
-            <div>Public Key (Base64): {toBase64(fromHex(publicKey))}</div>
-            <div>Cosmos Address: {cosmosAddress(publicKey)}</div>
+            <div>Private Key: {toHex(keyPair.privateKey).toUpperCase()}</div>
             <div>
-              Bech32 Address:{" "}
-              {toBech32("cosmos", fromHex(cosmosAddress(publicKey)))}
+              Public Key (Uncompressed):{" "}
+              {toHex(keyPair.publicKey).toUpperCase()}
             </div>
             <div>
-              Ethereum Address: {ethers.computeAddress("0x" + publicKey)}
+              Public Key (Compressed):{" "}
+              {toHex(Secp256k1.compressPubkey(keyPair.publicKey)).toUpperCase()}
+            </div>
+            <div>Public Key (Base64): {toBase64(keyPair.publicKey)}</div>
+            <div>
+              Cosmos Address:{" "}
+              {ethers.getAddress(toHex(rawCosmosAddress(keyPair.publicKey)))}
+            </div>
+            <div>
+              Cosmos Bech32 Address:{" "}
+              {toBech32(prefix, rawCosmosAddress(keyPair.publicKey))}
+            </div>
+            <div>
+              EVM Address:{" "}
+              {ethers.getAddress(toHex(rawEvmAddress(keyPair.publicKey)))}
+            </div>
+            <div>
+              EVM Bech32 Address:{" "}
+              {toBech32(prefix, rawEvmAddress(keyPair.publicKey))}
             </div>
           </>
         ) : null}
